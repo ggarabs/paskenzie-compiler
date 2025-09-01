@@ -1,6 +1,3 @@
-(*
-programa le dois numeros inteiros e encontra o maior
-*)
 program ex1;
 var
         num_1, num_2:integer;
@@ -12,6 +9,6 @@ begin
                 maior := num_1
         else
                 maior := num_2;
-        teste := ‘f’; (* so pra testar o char *)
-        write(maior) (* imprime o maior valor *)
+        teste := 'f';
+        write(maior)
 end.
