@@ -60,7 +60,7 @@ typedef struct{
 char *buffer;
 char lexema[20];
 int nLinha;
-char lookahead;
+TAtomo lookahead;
 TInfoAtomo infoAtomo;
 
 TInfoAtomo obter_atomo();
@@ -196,9 +196,49 @@ q1:
 
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
         info->atributo.id[buffer-ini_lexema] = '\0';
-
+        if (strcmp(info->atributo.id, "div") == 0) {
+        info->atomo = DIVIDE;
+        } else if (strcmp(info->atributo.id, "or") == 0) {
+        info->atomo = OR;
+        } else if (strcmp(info->atributo.id, "and") == 0) {
+        info->atomo = AND;
+        } else if (strcmp(info->atributo.id, "not") == 0) {
+        info->atomo = NOT;
+        } else if (strcmp(info->atributo.id, "if") == 0) {
+        info->atomo = IF;
+        } else if (strcmp(info->atributo.id, "then") == 0) {
+        info->atomo = THEN;
+        } else if (strcmp(info->atributo.id, "else") == 0) {
+        info->atomo = ELSE;
+        } else if (strcmp(info->atributo.id, "while") == 0) {
+        info->atomo = WHILE;
+        } else if (strcmp(info->atributo.id, "do") == 0) {
+        info->atomo = DO;
+        } else if (strcmp(info->atributo.id, "begin") == 0) {
+        info->atomo = BEGIN;
+        } else if (strcmp(info->atributo.id, "end") == 0) {
+        info->atomo = END;
+        } else if (strcmp(info->atributo.id, "read") == 0) {
+        info->atomo = READ;
+        } else if (strcmp(info->atributo.id, "write") == 0) {
+        info->atomo = WRITE;
+        } else if (strcmp(info->atributo.id, "var") == 0) {
+        info->atomo = VAR;
+        } else if (strcmp(info->atributo.id, "program") == 0) {
+        info->atomo = PROGRAM;
+        } else if (strcmp(info->atributo.id, "true") == 0) {
+        info->atomo = TRUE;
+        } else if (strcmp(info->atributo.id, "false") == 0) {
+        info->atomo = FALSE;
+        } else if (strcmp(info->atributo.id, "char") == 0) {
+        info->atomo = CHAR;
+        } else if (strcmp(info->atributo.id, "integer") == 0) {
+        info->atomo = INTEGER;
+        } else if (strcmp(info->atributo.id, "boolean") == 0) {
+        info->atomo = BOOLEAN;
+        } else {
         info->atomo = IDENTIFIER;
-
+        }
         return;
 }
 
@@ -207,7 +247,6 @@ void recognizes_constchar(TInfoAtomo *info){
         info->atributo.ch = *buffer;
         buffer++;
         return;
-
 }
 
 void consome(TAtomo atomo){
@@ -235,11 +274,11 @@ void block(){
 }
 
 void variable_declaration_part(){
-        if(lookahead.atomo == VAR){
+        if(lookahead == VAR){
                 consome(VAR);
                 variable_declaration();
                 consome(SEMICOLON);
-                while(lookahead.atomo == IDENTIFIER){
+                while(lookahead == IDENTIFIER){
                         variable_declaration();
                         consome(SEMICOLON);
                 }
@@ -248,7 +287,7 @@ void variable_declaration_part(){
 
 void variable_declaration(){
         consome(IDENTIFIER);
-        while(lookahead.atomo == COMMA){
+        while(lookahead == COMMA){
                 consome(COMMA);
                 consome(IDENTIFIER);
         }
@@ -268,7 +307,7 @@ void type(){
                         consome(BOOLEAN);
                         break;
                 default:
-                        consome('');
+                        consome(' ');
                         break;
         }
 }
@@ -276,7 +315,7 @@ void type(){
 void statement_part(){
         consome(BEGIN);
         statement();
-        while(lookahead.atomo == SEMICOLON){
+        while(lookahead == SEMICOLON){
                 consome(SEMICOLON);
                 statement();
         }
@@ -284,40 +323,34 @@ void statement_part(){
 }
 
 void statement(){
-        switch(lookahead){
-                case "read":
-                        read_statement();
-                        break;
-                case "write":
-                        write_statement();
-                        break;
-                case  "if":
-                        if_statement();
-                        break;
-                case "while":
-                        while_statement();
-                        break;
-                case "begin":
-                        statement_part();
-                        break;
-                default:
-                        assignment_statement();
-        }
+if (lookahead == READ) {
+    read_statement();
+} else if (lookahead == WRITE) {
+    write_statement();
+} else if (lookahead == IF) {
+    if_statement();
+} else if (lookahead == WHILE) {
+    while_statement();
+} else if (lookahead == BEGIN) {
+    statement_part();
+} else {
+    assignment_statement();
+}
 }
 
 void assignment_statement(){
-        consome(VARIABLE);
-        consome(ASSINGMENT);
+//        consome(VARIABLE);
+        consome(ASSIGNMENT);
         expression();
 }
 
 void read_statement(){
         consome(READ);
         consome(OPEN_BRACKETS);
-        consome(VARIABLE);
-        while(lookahead.atomo == COLON){
-                consome(colon);
-                consome(variable);
+        //consome(VARIABLE);
+        while(lookahead == COLON){
+                consome(COLON);
+                //consome(variable);
         }
         consome(CLOSE_BRACKETS);
 }
@@ -325,10 +358,10 @@ void read_statement(){
 void write_statement(){
         consome(WRITE);
         consome(OPEN_BRACKETS);
-        consome(VARIABLE);
-        while(lookahead.atomo == COLON){
-                consome(colon);
-                consome(variable);
+        //consome(VARIABLE);
+        while(lookahead == COLON){
+                consome(COLON);
+                //consome(variable);
         }
         consome(CLOSE_BRACKETS);
 }
@@ -338,7 +371,7 @@ void if_statement(){
         expression();
         consome(THEN);
         statement();
-        while(lookahead.atomo == ELSE){
+        while(lookahead == ELSE){
                 consome(ELSE);
                 statement();
         }
@@ -353,88 +386,70 @@ void while_statement(){
 
 void expression(){
         simple_expression();
-        while(lookahead.atomo == DIFFERENT){
+        while(lookahead == DIFFERENT){
                 relational_operator();
                 simple_expression();
         }
 }
 
 void relational_operator(){
-        switch(lookahead){
-                case "<>":
-                        consome(DIFFERENT);
-                        break;
-                case "<":
-                        consome(LESS_THAN);
-                        break;
-                case  "<=":
-                        consome(LESS_OR_EQUAL_THAN);
-                        break;
-                case ">=":
-                        consome(GREATER_OR_EQUAL_THAN);
-                        break;
-                case ">":
-                        consome(GREATER_THAN);
-                        break;
-                case "=":
-                        consome(ASSIGNEMENT);
-                        break;
-                case "or":
-                        consome(OR);
-                        break;
-                case "and":
-                        consome(AND);
-                        break;
-                default:
-                        consome(AND);
-                        break;
-        }
+        if(lookahead == DIFFERENT){
+                consome(DIFFERENT);
+        }else if(lookahead == LESS_THAN){
+                consome(LESS_THAN);
+        }else if(lookahead == LESS_OR_EQUAL_THEN){
+                consome(LESS_OR_EQUAL_THEN);
+        }else if(lookahead == GREATER_OR_EQUAL_THEN){
+                consome(GREATER_OR_EQUAL_THEN);
+        }else if(lookahead == GREATER_THAN){
+                consome(GREATER_THAN);
+        }else if(lookahead == ASSIGNMENT){
+                consome(ASSIGNMENT);
+        }else if(lookahead == OR){
+                consome(OR);
+        }else if(lookahead == AND){
+                consome(AND);
+        }else consome(OR);
 }
 
 void simple_expression(){
         term();
-        while(lookahead.atomo == PLUS || lookahead.atomo == MINUS){
+        while(lookahead == PLUS || lookahead == MINUS){
                 adding_operator();
                 term();
         }
 }
 
 void adding_operator(){
-        switch(lookahead){
-                case '+':
-                        consome(PLUS);
-                        break;
-                case '-':
-                        consome(MINUS);
-                        break;
-                default:
-                        consome(PLUS);
+        if(lookahead == PLUS){
+                consome(PLUS);
+        }else if(lookahead == MINUS){
+                consome(MINUS);
+        }else{
+                consome(PLUS);
         }
 }
 
 void term(){
         factor();
-        while(lookahead.atomo == MULTIPLY || lookahead.atomo == DIVISION){
+        while(lookahead == MULTIPLY || lookahead == DIVIDE){
                 multiplying_operator();
                 factor();
         }
 }
 
 void multiplying_operator(){
-        switch(lookahead){
-                case '*':
-                        consome(MULTIPLY);
-                        break;
-                case "div":
-                        consome(DIVISION);
-                        break;
-                default:
-                        consome(MULTIPLY);
+        if(lookahead == MULTIPLY){
+                consome(MULTIPLY);
+        }else if(lookahead == DIVIDE){
+                consome(DIVIDE);
+        }else{
+                consome(MULTIPLY);
         }
 }
 
 void factor(){
-        switch(lookahead.atomo){
+        switch(lookahead){
                 case IDENTIFIER:
                         consome(IDENTIFIER);
                         break;
