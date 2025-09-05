@@ -25,6 +25,7 @@ char *buffer;
 char lexema[16];
 TAtomo lookahead;
 TInfoAtomo infoAtomo;
+int nLinha;
 
 TInfoAtomo obter_atomo();
 void recognizes_keyword_or_identifier(TInfoAtomo *info);
@@ -85,9 +86,11 @@ int main(int argc, char** argv){
 
         char temporary_buffer[10000];
 
-        buffer = calloc(10000, sizeof(char));
+        buffer = calloc(10000, sizeof(char)); // verificar
 
         while(fgets(temporary_buffer, sizeof(temporary_buffer), file_pointer) != NULL) strcat(buffer, temporary_buffer);
+
+        nLinha = 1;
 
         infoAtomo = obter_atomo();
         lookahead = infoAtomo.atomo;
@@ -107,7 +110,10 @@ TInfoAtomo obter_atomo(){
 
         infoAtomo.atomo = ERROR;
 
-        while(*buffer == ' ' || *buffer == '\n' || *buffer == '\t' || *buffer == '\r') buffer++;
+        while(*buffer == ' ' || *buffer == '\n' || *buffer == '\t' || *buffer == '\r'){
+                if(*buffer == '\n') nLinha++;
+                buffer++;
+        }
 
         if(isdigit(*buffer)) recognizes_constint(&infoAtomo);
         else if(isalpha(*buffer) || *buffer == '_') recognizes_keyword_or_identifier(&infoAtomo);
@@ -117,6 +123,20 @@ TInfoAtomo obter_atomo(){
 
         return infoAtomo;
 }
+
+void consome(TAtomo atomo){
+        if(lookahead == atomo){
+                printf("#  %d:%s\n", nLinha, infoAtomo.atributo.id);
+                infoAtomo = obter_atomo();
+                lookahead = infoAtomo.atomo;
+        }
+        else{
+                printf("erro sintático: esperado [%c] encontrado [%c]\n", atomo, lookahead);
+                exit(1);
+        }
+}
+
+
 
 void recognizes_constint(TInfoAtomo *info){
         char *ini_lexema = buffer;
@@ -276,17 +296,6 @@ void recognizes_constchar(TInfoAtomo *info){
         info->atomo = CONSTCHAR;
 
         return;
-}
-
-void consome(TAtomo atomo){
-        if(lookahead == atomo){
-                infoAtomo = obter_atomo();
-                lookahead = infoAtomo.atomo;
-        }
-        else{
-                printf("erro sintático: esperado [%c] encontrado [%c]\n", atomo, lookahead);
-                exit(1);
-        }
 }
 
 void program(){         // OK
