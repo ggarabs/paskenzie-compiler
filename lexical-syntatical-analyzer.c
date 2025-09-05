@@ -11,6 +11,12 @@ typedef enum{
         NOT, TRUE, FALSE, ERROR, EOS
 }TAtomo;
 
+const char* atom_outputs[] = {"program", "identifier", "ponto_vigula", "ponto", "var", "virgula", "dois_pontos", "char",
+                              "integer", "boolean", "begin", "end", "atribuicao", "read", "end", "abre_parentesis", 
+                              "fecha_parentesis", "write", "if", "then", "else", "while", "do", "diferente", "menor", "menor ou igual", 
+                              "maior", "maior ou igual", "igual", "or", "and", "mais", "menos", "vezes", "dividido", "constint", "constchar",
+                              "not", "true", "false", "", "fim de arquivo"};
+
 typedef struct{
         TAtomo atomo;
         int linha;
@@ -98,7 +104,7 @@ int main(int argc, char** argv){
         program();
         consome(EOS);
 
-        printf("Programa sintaticamente correto :)\n");
+        printf("\n%d linha(s) analisada(s), programa sintaticamente correto\n", nLinha);
 
         fclose(file_pointer);
 
@@ -126,7 +132,9 @@ TInfoAtomo obter_atomo(){
 
 void consome(TAtomo atomo){
         if(lookahead == atomo){
-                printf("#  %d:%s\n", nLinha, infoAtomo.atributo.id);
+                printf("#  %d:%s", nLinha, atom_outputs[atomo]);
+                if(atomo == CONSTINT || atomo == CONSTCHAR || atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
+                printf("\n");
                 infoAtomo = obter_atomo();
                 lookahead = infoAtomo.atomo;
         }
@@ -174,7 +182,7 @@ q4:
         }
 
         strncpy(lexema, ini_lexema, buffer-ini_lexema);
-        lexema[buffer-ini_lexema] = '\0';
+        info->atributo.id[buffer-ini_lexema] = '\0';
 
         info->atomo = CONSTINT;
         info->atributo.numero = atof(lexema);
