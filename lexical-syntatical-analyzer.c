@@ -2,49 +2,13 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef enum{
-        PROGRAM,
-        SEMICOLON,
-        DOT,
-        VAR,
-        IDENTIFIER,
-        COMMA,
-        COLON,
-        CHAR,
-        INTEGER,
-        BOOLEAN,
-        BEGIN,
-        END,
-        ASSIGNMENT,
-        READ,
-        OPEN_BRACKETS,
-        CLOSE_BRACKETS,
-        WRITE,
-        IF,
-        THEN,
-        ELSE,
-        WHILE,
-        DO,
-        DIFFERENT,
-        LESS_THAN,
-        LESS_OR_EQUAL_THEN,
-        GREATER_THAN,
-        GREATER_OR_EQUAL_THEN,
-        EQUAL_TO,
-        OR,
-        AND,
-        PLUS,
-        MINUS,
-        MULTIPLY,
-        DIVIDE,
-        CONSTINT,
-        CONSTCHAR,
-        NOT,
-        TRUE,
-        FALSE,
-        ERRO,
-        EOS
+        PROGRAM, IDENTIFIER, SEMICOLON, DOT, VAR, COMMA, COLON, CHAR, INTEGER, BOOLEAN, BEGIN, END, ASSIGNMENT, READ,
+        OPEN_BRACKETS, CLOSE_BRACKETS, WRITE, IF, THEN, ELSE, WHILE, DO, DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN,
+        GREATER_THAN, GREATER_OR_EQUAL_THAN, EQUAL_TO, OR, AND, PLUS, MINUS, MULTIPLY, DIV, CONSTINT, CONSTCHAR,
+        NOT, TRUE, FALSE, ERROR, EOS
 }TAtomo;
 
 typedef struct{
@@ -58,14 +22,14 @@ typedef struct{
 }TInfoAtomo;
 
 char *buffer;
-char lexema[20];
-int nLinha;
+char lexema[16];
 TAtomo lookahead;
 TInfoAtomo infoAtomo;
 
 TInfoAtomo obter_atomo();
+void recognizes_keyword_or_identifier(TInfoAtomo *info);
 void recognizes_constint(TInfoAtomo *info);
-void recognizes_identifier(TInfoAtomo *info);
+void recognizes_operator_or_delimiter(TInfoAtomo *info);
 void recognizes_constchar(TInfoAtomo *info);
 
 void consome(TAtomo atomo);
@@ -89,6 +53,15 @@ void adding_operator();
 void term();
 void multiplying_operator();
 void factor();
+
+bool is_operator_or_delimiter(char* symbol){
+        return *symbol == ',' || *symbol == '.' || 
+                *symbol == ';' || *symbol == ':' || 
+                *symbol == '(' || *symbol == ')' ||
+                *symbol == '<' || *symbol == '>' || 
+                *symbol == '+' || *symbol == '-' ||
+                *symbol == '*';
+}
 
 int main(int argc, char** argv){
         if(argc == 1){
@@ -130,14 +103,15 @@ int main(int argc, char** argv){
 TInfoAtomo obter_atomo(){
         TInfoAtomo infoAtomo;
 
-        infoAtomo.atomo = ERRO;
+        infoAtomo.atomo = ERROR;
 
         while(*buffer == ' ' || *buffer == '\n' || *buffer == '\t' || *buffer == '\r') buffer++;
 
         if(isdigit(*buffer)) recognizes_constint(&infoAtomo);
-        else if(isalpha(*buffer) || *buffer == '_') recognizes_identifier(&infoAtomo);
+        else if(isalpha(*buffer) || *buffer == '_') recognizes_keyword_or_identifier(&infoAtomo);
+        else if(is_operator_or_delimiter(buffer)) recognizes_operator_or_delimiter(&infoAtomo);
+        else if(*buffer == '\'') recognizes_constchar(&infoAtomo);
         else if(*buffer == '\0') infoAtomo.atomo = EOS;
-        else recognizes_constchar(&infoAtomo);
 
         return infoAtomo;
 }
@@ -145,25 +119,25 @@ TInfoAtomo obter_atomo(){
 void recognizes_constint(TInfoAtomo *info){
         char *ini_lexema = buffer;
 q1:
-        if(*buffer == 'd'){
-                buffer++;
-                goto q2;
-        }
         if(isdigit(*buffer)){
                 buffer++;
                 goto q1;
+        }else if('d' == *buffer){
+                buffer++;
+                goto q2;
         }
+              
         info->atributo.numero = CONSTINT;
         return;
 q2:
-        if(*buffer == '+'){
+       if(isdigit(*buffer)){
+                buffer++;
+                goto q4;
+        }else if('+' == *buffer){
                 buffer++;
                 goto q3;
         }
-        if(isdigit(*buffer)){
-                buffer++;
-                goto q4;
-        }
+
         return;
 q3:
         if(isdigit(*buffer)){
@@ -186,7 +160,7 @@ q4:
         return;
 }
 
-void recognizes_identifier(TInfoAtomo *info){
+void recognizes_keyword_or_identifier(TInfoAtomo *info){
         char *ini_lexema = buffer;
 q1:
         if(isdigit(*buffer) || isalpha(*buffer) || *buffer == '_'){
@@ -196,56 +170,112 @@ q1:
 
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
         info->atributo.id[buffer-ini_lexema] = '\0';
-        if (strcmp(info->atributo.id, "div") == 0) {
-        info->atomo = DIVIDE;
-        } else if (strcmp(info->atributo.id, "or") == 0) {
-        info->atomo = OR;
-        } else if (strcmp(info->atributo.id, "and") == 0) {
-        info->atomo = AND;
-        } else if (strcmp(info->atributo.id, "not") == 0) {
-        info->atomo = NOT;
-        } else if (strcmp(info->atributo.id, "if") == 0) {
-        info->atomo = IF;
-        } else if (strcmp(info->atributo.id, "then") == 0) {
-        info->atomo = THEN;
-        } else if (strcmp(info->atributo.id, "else") == 0) {
-        info->atomo = ELSE;
-        } else if (strcmp(info->atributo.id, "while") == 0) {
-        info->atomo = WHILE;
-        } else if (strcmp(info->atributo.id, "do") == 0) {
-        info->atomo = DO;
-        } else if (strcmp(info->atributo.id, "begin") == 0) {
-        info->atomo = BEGIN;
-        } else if (strcmp(info->atributo.id, "end") == 0) {
-        info->atomo = END;
-        } else if (strcmp(info->atributo.id, "read") == 0) {
-        info->atomo = READ;
-        } else if (strcmp(info->atributo.id, "write") == 0) {
-        info->atomo = WRITE;
-        } else if (strcmp(info->atributo.id, "var") == 0) {
-        info->atomo = VAR;
-        } else if (strcmp(info->atributo.id, "program") == 0) {
-        info->atomo = PROGRAM;
-        } else if (strcmp(info->atributo.id, "true") == 0) {
-        info->atomo = TRUE;
-        } else if (strcmp(info->atributo.id, "false") == 0) {
-        info->atomo = FALSE;
-        } else if (strcmp(info->atributo.id, "char") == 0) {
-        info->atomo = CHAR;
-        } else if (strcmp(info->atributo.id, "integer") == 0) {
-        info->atomo = INTEGER;
-        } else if (strcmp(info->atributo.id, "boolean") == 0) {
-        info->atomo = BOOLEAN;
-        } else {
-        info->atomo = IDENTIFIER;
+
+        const char* keywords[] = {"program", "var", "char", "integer", "boolean", "begin", "end", "read", "write", 
+                                 "if", "then", "else", "while", "do", "or", "and", "div", "not", "true", "false"};
+
+        const TAtomo atoms[] = {PROGRAM, VAR, CHAR, INTEGER, BOOLEAN, BEGIN, END, READ, WRITE, IF, THEN, ELSE, 
+                                WHILE, DO, OR, AND, DIV, NOT, TRUE, FALSE};
+
+        int keywords_length = sizeof(keywords)/sizeof(keywords[0]);
+        bool is_keyword = false;
+
+        for(int index = 0; index < keywords_length; index++){
+                if(0 == strcmp(info->atributo.id, keywords[index])){
+                        info->atomo = atoms[index];
+                        is_keyword = true;
+                        break;
+                }
         }
+
+        if(!is_keyword) info->atomo = IDENTIFIER;
+
+        return;
+}
+
+void recognizes_operator_or_delimiter(TInfoAtomo *info){
+        char* ini_lexema = buffer;
+
+        if(*buffer == ':'){
+                buffer++;
+                goto q1;
+        }else if(*buffer == '<'){
+                buffer++;
+                goto q2;
+        }else if(*buffer == '>'){
+                buffer++;
+                goto q3;
+        }else if(*buffer == '+' || *buffer == '-' || *buffer == '*' ||
+                 *buffer == ';' || *buffer == ':' || *buffer == ',' ||
+                 *buffer == '.' || *buffer == '(' || *buffer == ')'){
+                buffer++;
+                goto q4;
+        }
+        return;
+q1:
+        if(*buffer == '='){
+                buffer++;
+                goto q4;
+        }
+        return;
+q2:
+        if(*buffer == '=' || *buffer == '>') buffer++;
+        goto q4;
+
+q3:
+        if(*buffer == '=') buffer++;
+        goto q4;
+
+q4:
+
+        strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
+        info->atributo.id[buffer-ini_lexema] = '\0';
+
+        const char* operator[] = {":=", "<>", "<", "<=", ">", ">=", "+", "-", "*"};
+        const TAtomo operators_atoms[] = {ASSIGNMENT, DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_THAN,
+                                GREATER_OR_EQUAL_THAN, PLUS, MINUS, MULTIPLY};
+
+        const int operator_length = sizeof(operator)/sizeof(operator[0]);
+        bool is_operator = false;
+
+        for(int index = 0; index < operator_length; index++){
+                if(strcmp(info->atributo.id, operator[index]) == 0){
+                        info->atomo = operators_atoms[index];
+                        is_operator = true;
+                        break;
+                }
+        }
+
+        if(is_operator) return;
+
+        const char* delimiters[] = {";", ".", ":", ",", "(", ")"};
+        const TAtomo delimiters_atoms[] = {SEMICOLON, DOT, COLON, COMMA, OPEN_BRACKETS, CLOSE_BRACKETS};
+
+        int delimiters_length = sizeof(delimiters);
+
+        for(int index = 0; index < delimiters_length; index++){
+                if(strcmp(info->atributo.id, delimiters[index]) == 0){
+                        info->atomo = delimiters_atoms[index];
+                        break;
+                }
+        }
+
         return;
 }
 
 void recognizes_constchar(TInfoAtomo *info){
-        info->atomo = CONSTCHAR;
-        info->atributo.ch = *buffer;
+        char* ini_lexema = buffer;
+        
+        buffer += 2;
+        ini_lexema++;
+
+        if(*buffer != '\'') return;
+
         buffer++;
+
+        info->atributo.ch = *ini_lexema;
+        info->atomo = CONSTCHAR;
+
         return;
 }
 
@@ -323,23 +353,23 @@ void statement_part(){
 }
 
 void statement(){
-if (lookahead == READ) {
-    read_statement();
-} else if (lookahead == WRITE) {
-    write_statement();
-} else if (lookahead == IF) {
-    if_statement();
-} else if (lookahead == WHILE) {
-    while_statement();
-} else if (lookahead == BEGIN) {
-    statement_part();
-} else {
-    assignment_statement();
-}
+        if (lookahead == READ) {
+                read_statement();
+        } else if (lookahead == WRITE) {
+                write_statement();
+        } else if (lookahead == IF) {
+                if_statement();
+        } else if (lookahead == WHILE) {
+                while_statement();
+        } else if (lookahead == BEGIN) {
+                statement_part();
+        } else {
+                assignment_statement();
+        }
 }
 
 void assignment_statement(){
-//        consome(VARIABLE);
+        consome(IDENTIFIER);
         consome(ASSIGNMENT);
         expression();
 }
@@ -347,10 +377,10 @@ void assignment_statement(){
 void read_statement(){
         consome(READ);
         consome(OPEN_BRACKETS);
-        //consome(VARIABLE);
-        while(lookahead == COLON){
-                consome(COLON);
-                //consome(variable);
+        consome(IDENTIFIER);
+        while(lookahead == COMMA){
+                consome(COMMA);
+                consome(IDENTIFIER);
         }
         consome(CLOSE_BRACKETS);
 }
@@ -358,10 +388,10 @@ void read_statement(){
 void write_statement(){
         consome(WRITE);
         consome(OPEN_BRACKETS);
-        //consome(VARIABLE);
+        consome(IDENTIFIER);
         while(lookahead == COLON){
                 consome(COLON);
-                //consome(variable);
+                consome(IDENTIFIER);
         }
         consome(CLOSE_BRACKETS);
 }
@@ -386,7 +416,9 @@ void while_statement(){
 
 void expression(){
         simple_expression();
-        while(lookahead == DIFFERENT){
+        while(lookahead == DIFFERENT || lookahead == LESS_THAN || lookahead == LESS_OR_EQUAL_THAN || 
+              lookahead == GREATER_OR_EQUAL_THAN ||  lookahead == GREATER_THAN || 
+              lookahead == EQUAL_TO || lookahead == OR || lookahead == AND){
                 relational_operator();
                 simple_expression();
         }
@@ -397,10 +429,10 @@ void relational_operator(){
                 consome(DIFFERENT);
         }else if(lookahead == LESS_THAN){
                 consome(LESS_THAN);
-        }else if(lookahead == LESS_OR_EQUAL_THEN){
-                consome(LESS_OR_EQUAL_THEN);
-        }else if(lookahead == GREATER_OR_EQUAL_THEN){
-                consome(GREATER_OR_EQUAL_THEN);
+        }else if(lookahead == LESS_OR_EQUAL_THAN){
+                consome(LESS_OR_EQUAL_THAN);
+        }else if(lookahead == GREATER_OR_EQUAL_THAN){
+                consome(GREATER_OR_EQUAL_THAN);
         }else if(lookahead == GREATER_THAN){
                 consome(GREATER_THAN);
         }else if(lookahead == ASSIGNMENT){
@@ -432,7 +464,7 @@ void adding_operator(){
 
 void term(){
         factor();
-        while(lookahead == MULTIPLY || lookahead == DIVIDE){
+        while(lookahead == MULTIPLY || lookahead == DIV){
                 multiplying_operator();
                 factor();
         }
@@ -441,8 +473,8 @@ void term(){
 void multiplying_operator(){
         if(lookahead == MULTIPLY){
                 consome(MULTIPLY);
-        }else if(lookahead == DIVIDE){
-                consome(DIVIDE);
+        }else if(lookahead == DIV){
+                consome(DIV);
         }else{
                 consome(MULTIPLY);
         }
