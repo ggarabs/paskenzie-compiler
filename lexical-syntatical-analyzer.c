@@ -95,6 +95,8 @@ int main(int argc, char** argv){
         program();
         consome(EOS);
 
+        printf("Programa sintaticamente correto :)\n");
+
         fclose(file_pointer);
 
         return 0;
@@ -206,18 +208,15 @@ void recognizes_operator_or_delimiter(TInfoAtomo *info){
                 buffer++;
                 goto q3;
         }else if(*buffer == '+' || *buffer == '-' || *buffer == '*' ||
-                 *buffer == ';' || *buffer == ':' || *buffer == ',' ||
-                 *buffer == '.' || *buffer == '(' || *buffer == ')'){
+                 *buffer == ';' || *buffer == ',' || *buffer == '.' || 
+                 *buffer == '(' || *buffer == ')'){
                 buffer++;
                 goto q4;
         }
         return;
 q1:
-        if(*buffer == '='){
-                buffer++;
-                goto q4;
-        }
-        return;
+        if(*buffer == '=') buffer++;
+        goto q4;
 q2:
         if(*buffer == '=' || *buffer == '>') buffer++;
         goto q4;
@@ -290,7 +289,7 @@ void consome(TAtomo atomo){
         }
 }
 
-void program(){
+void program(){         // OK
         consome(PROGRAM);
         consome(IDENTIFIER);
         consome(SEMICOLON);
@@ -298,12 +297,12 @@ void program(){
         consome(DOT);
 }
 
-void block(){
+void block(){           // OK
         variable_declaration_part();
         statement_part();
 }
 
-void variable_declaration_part(){
+void variable_declaration_part(){ // OK
         if(lookahead == VAR){
                 consome(VAR);
                 variable_declaration();
@@ -315,7 +314,7 @@ void variable_declaration_part(){
         }
 }
 
-void variable_declaration(){
+void variable_declaration(){ // OK
         consome(IDENTIFIER);
         while(lookahead == COMMA){
                 consome(COMMA);
@@ -325,7 +324,7 @@ void variable_declaration(){
         type();
 }
 
-void type(){
+void type(){ // Verificar
         switch(lookahead){
                 case CHAR:
                         consome(CHAR);
@@ -337,12 +336,12 @@ void type(){
                         consome(BOOLEAN);
                         break;
                 default:
-                        consome(' ');
+                        consome(CHAR);
                         break;
         }
 }
 
-void statement_part(){
+void statement_part(){ // OK
         consome(BEGIN);
         statement();
         while(lookahead == SEMICOLON){
@@ -352,29 +351,22 @@ void statement_part(){
         consome(END);
 }
 
-void statement(){
-        if (lookahead == READ) {
-                read_statement();
-        } else if (lookahead == WRITE) {
-                write_statement();
-        } else if (lookahead == IF) {
-                if_statement();
-        } else if (lookahead == WHILE) {
-                while_statement();
-        } else if (lookahead == BEGIN) {
-                statement_part();
-        } else {
-                assignment_statement();
-        }
+void statement(){ // Verificar
+        if (lookahead == READ) read_statement();
+        else if (lookahead == WRITE) write_statement();
+        else if (lookahead == IF) if_statement();
+        else if (lookahead == WHILE) while_statement();
+        else if (lookahead == BEGIN) statement_part();
+        else assignment_statement();
 }
 
-void assignment_statement(){
+void assignment_statement(){ // OK
         consome(IDENTIFIER);
         consome(ASSIGNMENT);
         expression();
 }
 
-void read_statement(){
+void read_statement(){ // OK
         consome(READ);
         consome(OPEN_BRACKETS);
         consome(IDENTIFIER);
@@ -385,7 +377,7 @@ void read_statement(){
         consome(CLOSE_BRACKETS);
 }
 
-void write_statement(){
+void write_statement(){ // OK
         consome(WRITE);
         consome(OPEN_BRACKETS);
         consome(IDENTIFIER);
@@ -396,27 +388,27 @@ void write_statement(){
         consome(CLOSE_BRACKETS);
 }
 
-void if_statement(){
+void if_statement(){ // OK
         consome(IF);
         expression();
         consome(THEN);
         statement();
-        while(lookahead == ELSE){
+        if(lookahead == ELSE){
                 consome(ELSE);
                 statement();
         }
 }
 
-void while_statement(){
+void while_statement(){ // OK
         consome(WHILE);
         expression();
         consome(DO);
         statement();
 }
 
-void expression(){
+void expression(){ // OK
         simple_expression();
-        while(lookahead == DIFFERENT || lookahead == LESS_THAN || lookahead == LESS_OR_EQUAL_THAN || 
+        if(lookahead == DIFFERENT || lookahead == LESS_THAN || lookahead == LESS_OR_EQUAL_THAN || 
               lookahead == GREATER_OR_EQUAL_THAN ||  lookahead == GREATER_THAN || 
               lookahead == EQUAL_TO || lookahead == OR || lookahead == AND){
                 relational_operator();
@@ -424,27 +416,27 @@ void expression(){
         }
 }
 
-void relational_operator(){
-        if(lookahead == DIFFERENT){
-                consome(DIFFERENT);
-        }else if(lookahead == LESS_THAN){
-                consome(LESS_THAN);
-        }else if(lookahead == LESS_OR_EQUAL_THAN){
-                consome(LESS_OR_EQUAL_THAN);
-        }else if(lookahead == GREATER_OR_EQUAL_THAN){
-                consome(GREATER_OR_EQUAL_THAN);
-        }else if(lookahead == GREATER_THAN){
-                consome(GREATER_THAN);
-        }else if(lookahead == ASSIGNMENT){
-                consome(ASSIGNMENT);
-        }else if(lookahead == OR){
-                consome(OR);
-        }else if(lookahead == AND){
-                consome(AND);
-        }else consome(OR);
+void relational_operator(){ // Verificar
+        const int operator_atom[] = {DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_OR_EQUAL_THAN, 
+                                        GREATER_THAN, ASSIGNMENT, OR, AND};
+
+        const int operator_atom_length = sizeof(operator_atom)/sizeof(int);
+
+        bool is_relational_operator = false;
+
+        for(int index = 0; index < operator_atom_length; index++){
+                if(lookahead == operator_atom[index]){
+                        consome(operator_atom[index]);
+                        is_relational_operator = true;
+                        break;
+                }
+        }
+
+        if(!is_relational_operator) consome(OR); // Pensar melhor
+
 }
 
-void simple_expression(){
+void simple_expression(){ // OK
         term();
         while(lookahead == PLUS || lookahead == MINUS){
                 adding_operator();
@@ -452,17 +444,13 @@ void simple_expression(){
         }
 }
 
-void adding_operator(){
-        if(lookahead == PLUS){
-                consome(PLUS);
-        }else if(lookahead == MINUS){
-                consome(MINUS);
-        }else{
-                consome(PLUS);
-        }
+void adding_operator(){ // OK
+        if(lookahead == PLUS) consome(PLUS);
+        else if(lookahead == MINUS) consome(MINUS);
+        else consome(PLUS);
 }
 
-void term(){
+void term(){ // OK
         factor();
         while(lookahead == MULTIPLY || lookahead == DIV){
                 multiplying_operator();
@@ -470,43 +458,35 @@ void term(){
         }
 }
 
-void multiplying_operator(){
-        if(lookahead == MULTIPLY){
-                consome(MULTIPLY);
-        }else if(lookahead == DIV){
-                consome(DIV);
-        }else{
-                consome(MULTIPLY);
-        }
+void multiplying_operator(){ // OK
+        if(lookahead == MULTIPLY) consome(MULTIPLY);
+        else if(lookahead == DIV) consome(DIV);
+        else consome(MULTIPLY);
 }
 
-void factor(){
-        switch(lookahead){
-                case IDENTIFIER:
-                        consome(IDENTIFIER);
+void factor(){ // OK
+        const int factor_atoms[] = {IDENTIFIER, CONSTINT, CONSTCHAR, 
+                                   OPEN_BRACKETS, NOT, TRUE, FALSE};
+
+        const int factor_atoms_length = sizeof(factor_atoms)/sizeof(int);
+
+        bool is_factor = false;
+        for(int index = 0; index < factor_atoms_length; index++){
+                if(lookahead == factor_atoms[index]){
+                        if(factor_atoms[index] == OPEN_BRACKETS){
+                                consome(OPEN_BRACKETS);
+                                expression();
+                                consome(CLOSE_BRACKETS);
+                        }else if(factor_atoms[index] == NOT){
+                                consome(NOT);
+                                factor();
+                        }else{
+                                consome(factor_atoms[index]);
+                        }
+                        is_factor = true;
                         break;
-                case CONSTINT:
-                        consome(CONSTINT);
-                        break;
-                case CONSTCHAR:
-                        consome(CONSTCHAR);
-                        break;
-                case OPEN_BRACKETS:
-                        consome(OPEN_BRACKETS);
-                        expression();
-                        consome(CLOSE_BRACKETS);
-                        break;
-                case NOT:
-                        consome(NOT);
-                        factor();
-                        break;
-                case TRUE:
-                        consome(TRUE);
-                        break;
-                case FALSE:
-                        consome(FALSE);
-                        break;
-                default:
-                        consome(IDENTIFIER);
+                }
         }
+
+        if(!is_factor) consome(IDENTIFIER);
 }
