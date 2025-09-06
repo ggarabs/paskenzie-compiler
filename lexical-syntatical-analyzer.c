@@ -3,6 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
+
+#define IDENTIFIER_MAX_LENGTH 15
 
 typedef enum{
         PROGRAM, IDENTIFIER, SEMICOLON, DOT, VAR, COMMA, COLON, CHAR, INTEGER, BOOLEAN, BEGIN, END, ASSIGNMENT, READ,
@@ -40,6 +43,7 @@ void recognizes_operator_or_delimiter(TInfoAtomo *info);
 void recognizes_constchar(TInfoAtomo *info);
 
 void consome(TAtomo atomo);
+void consome_comment();
 
 void program();
 void block();
@@ -131,29 +135,33 @@ TInfoAtomo obter_atomo(){
 }
 
 void consome(TAtomo atomo){
-        printf("%d\n", lookahead);
-        if(lookahead == OPEN_COMMENT){
-                printf("#  %d:%s", nLinha, atom_outputs[atomo]);
-                while(lookahead != CLOSE_COMMENT){
-                        infoAtomo = obter_atomo();
-                        lookahead = infoAtomo.atomo;
-                }
-                infoAtomo = obter_atomo();
-                lookahead = infoAtomo.atomo;
-        }
-        if(lookahead == atomo){
+       if(lookahead == OPEN_COMMENT) consome_comment();
+       if(lookahead == EOS) return;
+
+       if(lookahead == atomo){
                 printf("#  %d:%s", nLinha, atom_outputs[atomo]);
                 if(atomo == CONSTINT || atomo == CONSTCHAR || atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
                 printf("\n");
                 infoAtomo = obter_atomo();
                 lookahead = infoAtomo.atomo;
+                if(lookahead == OPEN_COMMENT) consome_comment();
         }else{
                 printf("erro sintático: esperado [%c] encontrado [%c]\n", atomo, lookahead);
                 exit(1);
         }
 }
 
-
+void consome_comment(){
+        while(lookahead == OPEN_COMMENT){
+                printf("#  %d:%s\n", nLinha, atom_outputs[lookahead]);
+                while(lookahead != CLOSE_COMMENT){
+                        infoAtomo = obter_atomo();
+                        lookahead = infoAtomo.atomo;
+                }
+                infoAtomo = obter_atomo();
+                lookahead = infoAtomo.atomo;
+        } 
+}
 
 void recognizes_constint(TInfoAtomo *info){
         char *ini_lexema = buffer;
@@ -191,10 +199,42 @@ q4:
         }
 
         strncpy(lexema, ini_lexema, buffer-ini_lexema);
-        info->atributo.id[buffer-ini_lexema] = '\0';
+
+        int number = 0, partial_result = 0, index = 0;
+        for(; index < buffer-ini_lexema; index++){
+                if(lexema[index] == 'd'){
+                        index++;
+                        break;
+                }
+                partial_result *= 10;
+                partial_result += lexema[index]-'0';
+        }
+
+        number = partial_result;
+        partial_result = 0;
+
+
+        const char notation_options[] = {'d', '+'};
+
+        for(int iterations = 0; iterations < 2; iterations++){
+                for(; index < buffer-ini_lexema; index++){
+                        if(lexema[index] == notation_options[iterations]){
+                                index++;
+                                if(iterations == 0) break;
+                                else continue;
+                        }
+                        partial_result *= 10;
+                        partial_result += lexema[index]-'0';
+                }
+
+                if(iterations == 0){
+                        number = partial_result;
+                        partial_result = 0;
+                }else number *= pow(10, partial_result);
+        }
 
         info->atomo = CONSTINT;
-        info->atributo.numero = atof(lexema);
+        info->atributo.numero = number;
 
         return;
 }
@@ -205,6 +245,11 @@ q1:
         if(isdigit(*buffer) || isalpha(*buffer) ||'_' == *buffer){
                 buffer++;
                 goto q1;
+        }
+
+        if(buffer-ini_lexema > IDENTIFIER_MAX_LENGTH){
+                printf("Erro léxico! Identificador com mais de 15 letras");
+                exit(1);
         }
 
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
@@ -276,6 +321,14 @@ q6:
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
         info->atributo.id[buffer-ini_lexema] = '\0';
 
+        if(strcmp(info->atributo.id, "(*") == 0){
+                info->atomo = OPEN_COMMENT;
+                return;
+        }else if(strcmp(info->atributo.id, "*)") == 0){
+                info->atomo = CLOSE_COMMENT;
+                return;
+        }
+
         const char* operator[] = {":=", "<>", "<", "<=", ">", ">=", "+", "-", "*"};
         const TAtomo operators_atoms[] = {ASSIGNMENT, DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_THAN,
                                           GREATER_OR_EQUAL_THAN, PLUS, MINUS, MULTIPLY};
@@ -319,14 +372,12 @@ void recognizes_constchar(TInfoAtomo *info){
         buffer++;
 
         info->atributo.ch = *ini_lexema;
-        strncpy(info->atributo.id, ini_lexema, 1);
-        info->atributo.id[1] = '\0';
         info->atomo = CONSTCHAR;
 
         return;
 }
 
-void program(){         // OK
+void program(){
         consome(PROGRAM);
         consome(IDENTIFIER);
         consome(SEMICOLON);
@@ -334,12 +385,12 @@ void program(){         // OK
         consome(DOT);
 }
 
-void block(){           // OK
+void block(){
         variable_declaration_part();
         statement_part();
 }
 
-void variable_declaration_part(){ // OK
+void variable_declaration_part(){
         if(lookahead == VAR){
                 consome(VAR);
                 variable_declaration();
@@ -351,7 +402,7 @@ void variable_declaration_part(){ // OK
         }
 }
 
-void variable_declaration(){ // OK
+void variable_declaration(){
         consome(IDENTIFIER);
         while(lookahead == COMMA){
                 consome(COMMA);
@@ -361,7 +412,7 @@ void variable_declaration(){ // OK
         type();
 }
 
-void type(){ // Verificar
+void type(){
         switch(lookahead){
                 case CHAR:
                         consome(CHAR);
@@ -378,7 +429,7 @@ void type(){ // Verificar
         }
 }
 
-void statement_part(){ // OK
+void statement_part(){
         consome(BEGIN);
         statement();
         while(lookahead == SEMICOLON){
@@ -388,7 +439,7 @@ void statement_part(){ // OK
         consome(END);
 }
 
-void statement(){ // Verificar
+void statement(){
         if (lookahead == READ) read_statement();
         else if (lookahead == WRITE) write_statement();
         else if (lookahead == IF) if_statement();
@@ -397,13 +448,13 @@ void statement(){ // Verificar
         else assignment_statement();
 }
 
-void assignment_statement(){ // OK
+void assignment_statement(){
         consome(IDENTIFIER);
         consome(ASSIGNMENT);
         expression();
 }
 
-void read_statement(){ // OK
+void read_statement(){
         consome(READ);
         consome(OPEN_BRACKETS);
         consome(IDENTIFIER);
@@ -414,7 +465,7 @@ void read_statement(){ // OK
         consome(CLOSE_BRACKETS);
 }
 
-void write_statement(){ // OK
+void write_statement(){
         consome(WRITE);
         consome(OPEN_BRACKETS);
         consome(IDENTIFIER);
@@ -425,7 +476,7 @@ void write_statement(){ // OK
         consome(CLOSE_BRACKETS);
 }
 
-void if_statement(){ // OK
+void if_statement(){
         consome(IF);
         expression();
         consome(THEN);
@@ -436,14 +487,14 @@ void if_statement(){ // OK
         }
 }
 
-void while_statement(){ // OK
+void while_statement(){
         consome(WHILE);
         expression();
         consome(DO);
         statement();
 }
 
-void expression(){ // OK
+void expression(){
         simple_expression();
         if(lookahead == DIFFERENT || lookahead == LESS_THAN || lookahead == LESS_OR_EQUAL_THAN || 
               lookahead == GREATER_OR_EQUAL_THAN ||  lookahead == GREATER_THAN || 
@@ -453,7 +504,7 @@ void expression(){ // OK
         }
 }
 
-void relational_operator(){ // Verificar
+void relational_operator(){
         const int operator_atom[] = {DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_OR_EQUAL_THAN, 
                                         GREATER_THAN, ASSIGNMENT, OR, AND};
 
@@ -469,11 +520,11 @@ void relational_operator(){ // Verificar
                 }
         }
 
-        if(!is_relational_operator) consome(OR); // Pensar melhor
+        if(!is_relational_operator) consome(OR);
 
 }
 
-void simple_expression(){ // OK
+void simple_expression(){
         term();
         while(lookahead == PLUS || lookahead == MINUS){
                 adding_operator();
@@ -481,13 +532,13 @@ void simple_expression(){ // OK
         }
 }
 
-void adding_operator(){ // OK
+void adding_operator(){
         if(lookahead == PLUS) consome(PLUS);
         else if(lookahead == MINUS) consome(MINUS);
         else consome(PLUS);
 }
 
-void term(){ // OK
+void term(){
         factor();
         while(lookahead == MULTIPLY || lookahead == DIV){
                 multiplying_operator();
@@ -495,13 +546,13 @@ void term(){ // OK
         }
 }
 
-void multiplying_operator(){ // OK
+void multiplying_operator(){
         if(lookahead == MULTIPLY) consome(MULTIPLY);
         else if(lookahead == DIV) consome(DIV);
         else consome(MULTIPLY);
 }
 
-void factor(){ // OK
+void factor(){
         const int factor_atoms[] = {IDENTIFIER, CONSTINT, CONSTCHAR, 
                                    OPEN_BRACKETS, NOT, TRUE, FALSE};
 
