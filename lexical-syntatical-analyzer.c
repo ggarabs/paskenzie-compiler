@@ -8,14 +8,14 @@ typedef enum{
         PROGRAM, IDENTIFIER, SEMICOLON, DOT, VAR, COMMA, COLON, CHAR, INTEGER, BOOLEAN, BEGIN, END, ASSIGNMENT, READ,
         OPEN_BRACKETS, CLOSE_BRACKETS, WRITE, IF, THEN, ELSE, WHILE, DO, DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN,
         GREATER_THAN, GREATER_OR_EQUAL_THAN, EQUAL_TO, OR, AND, PLUS, MINUS, MULTIPLY, DIV, CONSTINT, CONSTCHAR,
-        NOT, TRUE, FALSE, ERROR, EOS
+        NOT, TRUE, FALSE, OPEN_COMMENT, CLOSE_COMMENT, ERROR, EOS
 }TAtomo;
 
 const char* atom_outputs[] = {"program", "identifier", "ponto_vigula", "ponto", "var", "virgula", "dois_pontos", "char",
-                              "integer", "boolean", "begin", "end", "atribuicao", "read", "end", "abre_parentesis", 
+                              "integer", "boolean", "begin", "end", "atribuicao", "read", "abre_parentesis", 
                               "fecha_parentesis", "write", "if", "then", "else", "while", "do", "diferente", "menor", "menor ou igual", 
                               "maior", "maior ou igual", "igual", "or", "and", "mais", "menos", "vezes", "dividido", "constint", "constchar",
-                              "not", "true", "false", "", "fim de arquivo"};
+                              "not", "true", "false", "comentario", "", "", "fim de arquivo"};
 
 typedef struct{
         TAtomo atomo;
@@ -131,14 +131,23 @@ TInfoAtomo obter_atomo(){
 }
 
 void consome(TAtomo atomo){
+        printf("%d\n", lookahead);
+        if(lookahead == OPEN_COMMENT){
+                printf("#  %d:%s", nLinha, atom_outputs[atomo]);
+                while(lookahead != CLOSE_COMMENT){
+                        infoAtomo = obter_atomo();
+                        lookahead = infoAtomo.atomo;
+                }
+                infoAtomo = obter_atomo();
+                lookahead = infoAtomo.atomo;
+        }
         if(lookahead == atomo){
                 printf("#  %d:%s", nLinha, atom_outputs[atomo]);
                 if(atomo == CONSTINT || atomo == CONSTCHAR || atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
                 printf("\n");
                 infoAtomo = obter_atomo();
                 lookahead = infoAtomo.atomo;
-        }
-        else{
+        }else{
                 printf("erro sintático: esperado [%c] encontrado [%c]\n", atomo, lookahead);
                 exit(1);
         }
@@ -193,7 +202,7 @@ q4:
 void recognizes_keyword_or_identifier(TInfoAtomo *info){
         char *ini_lexema = buffer;
 q1:
-        if(isdigit(*buffer) || isalpha(*buffer) || *buffer == '_'){
+        if(isdigit(*buffer) || isalpha(*buffer) ||'_' == *buffer){
                 buffer++;
                 goto q1;
         }
@@ -235,32 +244,41 @@ void recognizes_operator_or_delimiter(TInfoAtomo *info){
         }else if(*buffer == '>'){
                 buffer++;
                 goto q3;
-        }else if(*buffer == '+' || *buffer == '-' || *buffer == '*' ||
-                 *buffer == ';' || *buffer == ',' || *buffer == '.' || 
-                 *buffer == '(' || *buffer == ')'){
+        }else if(*buffer == '('){
                 buffer++;
                 goto q4;
+        }else if(*buffer == '*'){
+                buffer++;
+                goto q5;
+        }else if(*buffer == '+' || *buffer == '-' || *buffer == ')' ||
+                 *buffer == ';' || *buffer == ',' || *buffer == '.'){
+                buffer++;
+                goto q6;
         }
         return;
 q1:
         if(*buffer == '=') buffer++;
-        goto q4;
+        goto q6;
 q2:
         if(*buffer == '=' || *buffer == '>') buffer++;
-        goto q4;
-
+        goto q6;
 q3:
         if(*buffer == '=') buffer++;
-        goto q4;
-
+        goto q6;
 q4:
+        if(*buffer == '*') buffer++;
+        goto q6;
+q5:
+        if(*buffer == ')') buffer++;
+        goto q6;
+q6:
 
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
         info->atributo.id[buffer-ini_lexema] = '\0';
 
         const char* operator[] = {":=", "<>", "<", "<=", ">", ">=", "+", "-", "*"};
         const TAtomo operators_atoms[] = {ASSIGNMENT, DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_THAN,
-                                GREATER_OR_EQUAL_THAN, PLUS, MINUS, MULTIPLY};
+                                          GREATER_OR_EQUAL_THAN, PLUS, MINUS, MULTIPLY};
 
         const int operator_length = sizeof(operator)/sizeof(operator[0]);
         bool is_operator = false;
@@ -301,6 +319,8 @@ void recognizes_constchar(TInfoAtomo *info){
         buffer++;
 
         info->atributo.ch = *ini_lexema;
+        strncpy(info->atributo.id, ini_lexema, 1);
+        info->atributo.id[1] = '\0';
         info->atomo = CONSTCHAR;
 
         return;
@@ -497,9 +517,7 @@ void factor(){ // OK
                         }else if(factor_atoms[index] == NOT){
                                 consome(NOT);
                                 factor();
-                        }else{
-                                consome(factor_atoms[index]);
-                        }
+                        }else consome(factor_atoms[index]);
                         is_factor = true;
                         break;
                 }
