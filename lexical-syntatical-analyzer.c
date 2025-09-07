@@ -24,7 +24,7 @@ typedef struct{
         TAtomo atomo;
         int linha;
         union{
-                double numero;
+                int numero;
                 char id[16];
                 char ch;
         }atributo;
@@ -121,7 +121,9 @@ TInfoAtomo obter_atomo(){
         infoAtomo.atomo = ERROR;
 
         while(*buffer == ' ' || *buffer == '\n' || *buffer == '\t' || *buffer == '\r'){
-                if(*buffer == '\n') nLinha++;
+                if(*buffer == '\n'){
+                        nLinha++;
+                }
                 buffer++;
         }
 
@@ -140,7 +142,9 @@ void consome(TAtomo atomo){
 
        if(lookahead == atomo){
                 printf("#  %d:%s", nLinha, atom_outputs[atomo]);
-                if(atomo == CONSTINT || atomo == CONSTCHAR || atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
+                if(atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
+                else if(atomo == CONSTCHAR) printf(" : %c", infoAtomo.atributo.ch);
+                else if(atomo == CONSTINT) printf(" : %d", infoAtomo.atributo.numero);
                 printf("\n");
                 infoAtomo = obter_atomo();
                 lookahead = infoAtomo.atomo;
@@ -212,7 +216,6 @@ q4:
 
         number = partial_result;
         partial_result = 0;
-
 
         const char notation_options[] = {'d', '+'};
 
