@@ -4,7 +4,6 @@
 #define LEXER_H
 
 TInfoAtomo obter_atomo();
-bool is_operator_or_delimiter(char* symbol);
 void recognizes_constint(TInfoAtomo *info);
 void recognizes_keyword_or_identifier(TInfoAtomo *info);
 void recognizes_operator_or_delimiter(TInfoAtomo *info);

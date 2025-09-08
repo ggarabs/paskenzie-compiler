@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "globals.h"
 #include "lexer.h"
+#include "utils.h"
 
 void consome(TAtomo atomo){
        if(lookahead == OPEN_COMMENT) consome_comment();
@@ -15,6 +16,7 @@ void consome(TAtomo atomo){
                 else if(atomo == CONSTINT) printf(" : %d", infoAtomo.atributo.numero);
                 printf("\n");
                 infoAtomo = obter_atomo();
+                // inserir lançamento de erro léxico aqui
                 lookahead = infoAtomo.atomo;
                 if(lookahead == OPEN_COMMENT) consome_comment();
         }else{
@@ -23,14 +25,16 @@ void consome(TAtomo atomo){
         }
 }
 
-void consome_comment(){
+void consome_comment(){ // mexer aqui
         while(lookahead == OPEN_COMMENT){
+                if(lookahead == EOS) report_lexical_error(buffer);
                 printf("#  %d:%s\n", nLinha, atom_outputs[lookahead]);
                 while(lookahead != CLOSE_COMMENT){
                         infoAtomo = obter_atomo();
                         lookahead = infoAtomo.atomo;
                 }
                 infoAtomo = obter_atomo();
+                // inserir lançamento de erro léxico aqui
                 lookahead = infoAtomo.atomo;
         } 
 }

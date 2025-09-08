@@ -6,8 +6,8 @@ const char* atom_outputs[] = {"program", "identifier", "ponto_vigula", "ponto", 
                               "maior", "maior ou igual", "igual", "or", "and", "mais", "menos", "vezes", "dividido", "constint", "constchar",
                               "not", "true", "false", "comentario", "", "", "fim de arquivo"};
 
-const char* atom_outputs_symbols[] = {"program", "identifier", ";", ".", "var", ",", ":", "char",
-                              "integer", "boolean", "begin", "end", ":=", "read", "(", 
+const char* atom_outputs_symbols[] = {"program", "identifier", ";", ".", "var", ",", ":", "type",
+                              "type", "type", "begin", "end", ":=", "read", "(", 
                               ")", "write", "if", "then", "else", "while", "do", "<>", "<", "<=", 
                               ">", ">=", "=", "or", "and", "+", "-", "*", "div", "constint", "constchar",
                               "not", "true", "false", "(*", "*)", "", "\0"};

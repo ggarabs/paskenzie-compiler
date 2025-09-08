@@ -5,6 +5,7 @@
 #include <math.h>
 #include "lexer.h"
 #include "globals.h"
+#include "utils.h"
 
 TInfoAtomo obter_atomo(){
         TInfoAtomo infoAtomo;
@@ -18,24 +19,12 @@ TInfoAtomo obter_atomo(){
 
         if(isdigit(*buffer)) recognizes_constint(&infoAtomo);
         else if(isalpha(*buffer) || *buffer == '_') recognizes_keyword_or_identifier(&infoAtomo);
-        else if(is_operator_or_delimiter(buffer)) recognizes_operator_or_delimiter(&infoAtomo);
+        else if(is_operator_or_delimiter(*buffer)) recognizes_operator_or_delimiter(&infoAtomo);
         else if(*buffer == '\'') recognizes_constchar(&infoAtomo);
         else if(*buffer == '\0') infoAtomo.atomo = EOS;
-        else{
-                printf("Erro léxico!");
-                exit(1);
-        }
+        else report_lexical_error(buffer); // mexer aqui
 
         return infoAtomo;
-}
-
-bool is_operator_or_delimiter(char* symbol){
-        return *symbol == ',' || *symbol == '.' || 
-                *symbol == ';' || *symbol == ':' || 
-                *symbol == '(' || *symbol == ')' ||
-                *symbol == '<' || *symbol == '>' || 
-                *symbol == '+' || *symbol == '-' ||
-                *symbol == '*';
 }
 
 void recognizes_constint(TInfoAtomo *info){
@@ -48,32 +37,38 @@ q1:
                 buffer++;
                 goto q2;
         }
-              
-        info->atributo.numero = CONSTINT;
-        return;
+
+        goto q4;
 q2:
-       if(isdigit(*buffer)){
+        if(isdigit(*buffer)){
                 buffer++;
                 goto q4;
         }else if('+' == *buffer){
                 buffer++;
                 goto q3;
         }
-
-        return;
+        report_lexical_error(ini_lexema); // return talvez
 q3:
         if(isdigit(*buffer)){
                 buffer++;
-                goto q3;
+                goto q4;
         }
-        return;
+        report_lexical_error(ini_lexema); // return talvez
 q4:
         if(isdigit(*buffer)){
                 buffer++;
                 goto q4;
         }
 
+        if(!is_token_delimiter()){
+                info->atomo = ERROR;
+                report_lexical_error(ini_lexema); // return talvez
+        }
+
         strncpy(lexema, ini_lexema, buffer-ini_lexema);
+        lexema[buffer-ini_lexema] = '\0';
+
+        // usar atoi?
 
         int number = 0, partial_result = 0, index = 0;
         for(; index < buffer-ini_lexema; index++){
@@ -88,24 +83,14 @@ q4:
         number = partial_result;
         partial_result = 0;
 
-        const char notation_options[] = {'d', '+'};
+        if(lexema[index] == '+') index++;
 
-        for(int iterations = 0; iterations < 2; iterations++){
-                for(; index < buffer-ini_lexema; index++){
-                        if(lexema[index] == notation_options[iterations]){
-                                index++;
-                                if(iterations == 0) break;
-                                else continue;
-                        }
-                        partial_result *= 10;
-                        partial_result += lexema[index]-'0';
-                }
-
-                if(iterations == 0){
-                        number = partial_result;
-                        partial_result = 0;
-                }else number *= pow(10, partial_result);
+        for(; index < buffer-ini_lexema; index++){
+                partial_result *= 10;
+                partial_result += lexema[index]-'0';
         }
+
+        number *= pow(10, partial_result);
 
         info->atomo = CONSTINT;
         info->atributo.numero = number;
@@ -113,6 +98,7 @@ q4:
         return;
 }
 
+// verificar regras de validação do identificador
 void recognizes_keyword_or_identifier(TInfoAtomo *info){
         char *ini_lexema = buffer;
 q1:
@@ -235,6 +221,7 @@ q6:
         return;
 }
 
+// modificar
 void recognizes_constchar(TInfoAtomo *info){
         char* ini_lexema = buffer;
         

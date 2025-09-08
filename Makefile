@@ -3,7 +3,7 @@ TARGET = compilador
 CC = gcc
 CFLAGS = -Wall -Wno-unused-result -g -Og
 
-SRCS = compilador.c globals.c lexer.c parser.c
+SRCS = compilador.c globals.c lexer.c parser.c utils.c
 
 $(TARGET):
 	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET) -lm
