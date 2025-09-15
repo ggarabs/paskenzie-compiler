@@ -1,2 +1,0 @@
-- ver se faz sentido o analisador sintático lançar o erro léxico.
-- tratar comentários desbalanceados, e reportar como erro léxico.

@@ -1,14 +1,16 @@
+// Gustavo Garabetti - RA: 10409258
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include "parser.h"
 #include "globals.h"
 #include "lexer.h"
 #include "utils.h"
+#include "errors.h"
 
 void consome(TAtomo atomo){
        if(lookahead == OPEN_COMMENT) consome_comment();
        if(lookahead == EOS) return;
-
        if(lookahead == atomo){
                 printf("#  %d:%s", nLinha, atom_outputs[atomo]);
                 if(atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
@@ -16,27 +18,27 @@ void consome(TAtomo atomo){
                 else if(atomo == CONSTINT) printf(" : %d", infoAtomo.atributo.numero);
                 printf("\n");
                 infoAtomo = obter_atomo();
-                // inserir lançamento de erro léxico aqui
                 lookahead = infoAtomo.atomo;
-                if(lookahead == OPEN_COMMENT) consome_comment();
-        }else{
-                printf("#  %d:erro sintático, esperado [%s] encontrado [%s]\n", nLinha, atom_outputs_symbols[atomo], atom_outputs_symbols[lookahead]);
-                exit(1);
-        }
+                if(infoAtomo.atomo == ERROR) report_lexical_error();
+                if(lookahead == OPEN_COMMENT) consome_comment();        // trata caso de comentários consecutivos
+        }else
+                report_syntax_error(atomo, infoAtomo);
 }
 
-void consome_comment(){ // mexer aqui
+void consome_comment(){
         while(lookahead == OPEN_COMMENT){
-                if(lookahead == EOS) report_lexical_error(buffer);
+                if(lookahead == EOS) report_lexical_error();
                 printf("#  %d:%s\n", nLinha, atom_outputs[lookahead]);
+                infoAtomo = obter_atomo();
+                lookahead = infoAtomo.atomo;
                 while(lookahead != CLOSE_COMMENT){
+                        if(lookahead == EOS) report_comment_error(buffer);      // trata comentários não fechados
                         infoAtomo = obter_atomo();
                         lookahead = infoAtomo.atomo;
                 }
                 infoAtomo = obter_atomo();
-                // inserir lançamento de erro léxico aqui
-                lookahead = infoAtomo.atomo;
-        } 
+                lookahead = infoAtomo.atomo;                
+        }
 }
 
 void program(){
@@ -168,7 +170,7 @@ void expression(){
 
 void relational_operator(){
         const int operator_atom[] = {DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_OR_EQUAL_THAN, 
-                                        GREATER_THAN, ASSIGNMENT, OR, AND};
+                                        GREATER_THAN, EQUAL_TO, OR, AND};
 
         const int operator_atom_length = sizeof(operator_atom)/sizeof(int);
 

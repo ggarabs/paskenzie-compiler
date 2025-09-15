@@ -1,3 +1,5 @@
+// Gustavo Garabetti - RA: 10409258
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5,8 +7,10 @@
 #include "lexer.h"
 #include "parser.h"
 #include "globals.h"
+#include "utils.h"
 
 int main(int argc, char** argv){
+        // obtenção do nome do código-fonte em paskenzie a partir dos argumentos fornecidos por linha de comando
         if(argc == 1){
                 printf("Nenhum código fonte fornecido.\n");
                 return 1;
@@ -17,33 +21,22 @@ int main(int argc, char** argv){
         }
 
         char* source_code_filename = argv[1];
-
-        FILE* file_pointer;
-
-        file_pointer = fopen(source_code_filename, "rb");
+        FILE* file_pointer = fopen(source_code_filename, "rb"); // abertura do arquivo para leitura em binário
 
         if(NULL == file_pointer){
                 printf("Arquivo fonte não encontrado na pasta atual.\n");
                 return 1;
         }
 
-        fseek(file_pointer, 0, SEEK_END);
-        long file_size = ftell(file_pointer);
+        long file_size = get_file_size(file_pointer, source_code_filename);
 
         file_pointer = fopen(source_code_filename, "r");
 
-        if(NULL == file_pointer){
-                printf("Arquivo fonte não encontrado na pasta atual.\n");
-                return 1;
-        }
+        char* temporary_buffer = (char*) calloc(file_size, sizeof(char));
+        buffer = (char*) calloc(file_size+1, sizeof(char));
 
-        char temporary_buffer[file_size];
-
-        buffer = calloc(file_size, sizeof(char));
-
-        while(fgets(temporary_buffer, sizeof(temporary_buffer), file_pointer) != NULL) strcat(buffer, temporary_buffer);
-
-        nLinha = 1;
+        // gravar conteúdo do arquivo no buffer
+        while(fgets(temporary_buffer, file_size, file_pointer) != NULL) strcat(buffer, temporary_buffer);
 
         infoAtomo = obter_atomo();
         lookahead = infoAtomo.atomo;

@@ -3,7 +3,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-void report_lexical_error(char* buffer);
+long get_file_size(FILE* file_pointer, char* source_code_filename);
+
 bool is_operator_or_delimiter(char symbol);
 bool is_token_delimiter();
 

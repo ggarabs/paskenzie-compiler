@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "globals.h"
+#include "errors.h"
 #ifndef PARSER_H
 #define PARSER_H
 

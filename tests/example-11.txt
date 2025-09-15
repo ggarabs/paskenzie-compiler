@@ -9,7 +9,7 @@ var
 begin
         read(num_1,num_2);
         if num_1 > num_2 then
-                maior := 78
+                maior := 34d(*x*)5
         else
                 maior := num_2;
         teste := 'f'; (* so pra testar o char *)

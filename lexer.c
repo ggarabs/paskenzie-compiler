@@ -1,3 +1,5 @@
+// Gustavo Garabetti - RA: 10409258
+
 #include <stdbool.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -22,13 +24,22 @@ TInfoAtomo obter_atomo(){
         else if(is_operator_or_delimiter(*buffer)) recognizes_operator_or_delimiter(&infoAtomo);
         else if(*buffer == '\'') recognizes_constchar(&infoAtomo);
         else if(*buffer == '\0') infoAtomo.atomo = EOS;
-        else report_lexical_error(buffer); // mexer aqui
+        // se há um erro léxico no primeiro caractere do buffer, então eu limpo o contéudo do lexema anterior para capturar o token errado no report
+        else lexema[0] = '\0'; 
 
         return infoAtomo;
 }
 
+// CONSTINT <= 2*10^9
 void recognizes_constint(TInfoAtomo *info){
         char *ini_lexema = buffer;
+        goto q1;
+
+qL:
+        strncpy(lexema, ini_lexema, buffer-ini_lexema);
+        lexema[buffer-ini_lexema] = '\0';
+        return;
+
 q1:
         if(isdigit(*buffer)){
                 buffer++;
@@ -47,48 +58,53 @@ q2:
                 buffer++;
                 goto q3;
         }
-        report_lexical_error(ini_lexema); // return talvez
+
+        goto qL;
+        
 q3:
         if(isdigit(*buffer)){
                 buffer++;
                 goto q4;
         }
-        report_lexical_error(ini_lexema); // return talvez
+
+        goto qL;
 q4:
         if(isdigit(*buffer)){
                 buffer++;
                 goto q4;
         }
 
-        if(!is_token_delimiter()){
-                info->atomo = ERROR;
-                report_lexical_error(ini_lexema); // return talvez
-        }
+        if(!is_token_delimiter()) goto qL;
 
         strncpy(lexema, ini_lexema, buffer-ini_lexema);
         lexema[buffer-ini_lexema] = '\0';
 
-        // usar atoi?
+        int number = 0, index = 0;
+        char* mantissa = (char*)calloc(IDENTIFIER_MAX_LENGTH, sizeof(char));
+        for(; index < buffer-ini_lexema; index++) if(lexema[index] == 'd') break;
 
-        int number = 0, partial_result = 0, index = 0;
-        for(; index < buffer-ini_lexema; index++){
-                if(lexema[index] == 'd'){
-                        index++;
-                        break;
-                }
-                partial_result *= 10;
-                partial_result += lexema[index]-'0';
-        }
+        strncpy(mantissa, lexema, index);
+        mantissa[index] = '\0';
 
-        number = partial_result;
-        partial_result = 0;
+        if(lexema[index] == 'd') index++;
+
+        // verificação de limites na mantissa.
+        if(strlen(mantissa) > 10) return;
+        if(strlen(mantissa) == 10 && mantissa[0] > '2') return;
+
+        number = atoi(mantissa);
 
         if(lexema[index] == '+') index++;
 
-        for(; index < buffer-ini_lexema; index++){
-                partial_result *= 10;
-                partial_result += lexema[index]-'0';
-        }
+        char* pot10 = (char*)calloc(IDENTIFIER_MAX_LENGTH, sizeof(char));
+        strncpy(pot10, lexema+index, buffer-ini_lexema-index);
+        pot10[index] = '\0';
+
+        int partial_result = atoi(pot10);
+
+        // verificação de limites do número.
+        if((strlen(mantissa) + partial_result) > 10) return;
+        if((strlen(mantissa) + partial_result == 10) && mantissa[0] > '2') return;
 
         number *= pow(10, partial_result);
 
@@ -98,7 +114,6 @@ q4:
         return;
 }
 
-// verificar regras de validação do identificador
 void recognizes_keyword_or_identifier(TInfoAtomo *info){
         char *ini_lexema = buffer;
 q1:
@@ -108,8 +123,9 @@ q1:
         }
 
         if(buffer-ini_lexema > IDENTIFIER_MAX_LENGTH){
-                printf("Erro léxico! Identificador com mais de 15 letras");
-                exit(1);
+                strncpy(lexema, ini_lexema, buffer-ini_lexema);
+                lexema[buffer-ini_lexema] = '\0';
+                return;
         }
 
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
@@ -181,10 +197,10 @@ q6:
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
         info->atributo.id[buffer-ini_lexema] = '\0';
 
-        if(strcmp(info->atributo.id, "(*") == 0){
+        if(0 == strcmp(info->atributo.id, "(*")){
                 info->atomo = OPEN_COMMENT;
                 return;
-        }else if(strcmp(info->atributo.id, "*)") == 0){
+        }else if(0 == strcmp(info->atributo.id, "*)")){
                 info->atomo = CLOSE_COMMENT;
                 return;
         }
@@ -221,15 +237,18 @@ q6:
         return;
 }
 
-// modificar
 void recognizes_constchar(TInfoAtomo *info){
         char* ini_lexema = buffer;
         
         buffer += 2;
+
+        if(*buffer != '\''){
+                strncpy(lexema, ini_lexema, buffer-ini_lexema);
+                lexema[buffer-ini_lexema] = '\0';
+                return;
+        }
+
         ini_lexema++;
-
-        if(*buffer != '\'') return;
-
         buffer++;
 
         info->atributo.ch = *ini_lexema;

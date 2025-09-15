@@ -1,0 +1,4 @@
+program ex2;
+begin
+    write(maior ;
+end.

@@ -21,7 +21,7 @@ typedef struct{
 extern const char* atom_outputs[];
 extern const char* atom_outputs_symbols[];
 extern char *buffer;
-extern char lexema[16];
+extern char lexema[100000];
 extern TAtomo lookahead;
 extern TInfoAtomo infoAtomo;
 extern int nLinha;

@@ -9,9 +9,9 @@ var
 begin
         read(num_1,num_2);
         if num_1 > num_2 then
-                maior := 78
+                maior := 2+3 and 1
         else
-                maior := num_2;
+                menor :=> 123;
         teste := 'f'; (* so pra testar o char *)
         write(maior) (* imprime o maior valor *)
 end.
