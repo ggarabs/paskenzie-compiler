@@ -10,6 +10,8 @@
 void report_lexical_error(){
         bool is_buffer_changed = false;
 
+        printf("%s\n", lexema);
+
         // se o erro foi encontrado no meio de um token, esse trecho de código o recupera
         char *ini_lexema = buffer-strlen(lexema);
         while(*buffer != EOS && *buffer != '\n' && *buffer != ' ' && !is_token_delimiter()){

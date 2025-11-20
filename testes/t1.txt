@@ -1,0 +1,14 @@
+(* 
+Comentario de varias linhas * ) / *
+**) 
+program t1;
+var 
+     a : integer;
+	 b : char;
+	 c : boolean;
+begin
+	(**)
+    a := 1;
+	a := 20;
+	b := '3'
+end.

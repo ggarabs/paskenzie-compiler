@@ -1,0 +1,12 @@
+program t3;
+var 
+  i : integer;
+
+
+begin
+  _a := 1;
+	while i < 3d2 do
+  begin
+    soma := soma + 1
+  end
+end.

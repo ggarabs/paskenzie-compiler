@@ -1,0 +1,20 @@
+(*
+teste
+*)
+program t4;
+var 
+  x, y, iguais : integer;
+	
+begin
+    read(x);
+    read(y);
+
+    if ((x) > (y)) then
+    begin
+        iguais := true
+    end
+    else
+        iguais := false;
+
+    write(iguais)
+end.

@@ -1,0 +1,11 @@
+
+program e0;
+var 
+    a : integer;
+	b : char;
+begin
+	(**)
+    a := 1*(a>12d2)and(b<550);
+	a := 20;
+	b := '3'; (*erro ponto virgula*)
+end.

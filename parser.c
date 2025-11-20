@@ -133,8 +133,8 @@ void write_statement(){
         consome(WRITE);
         consome(OPEN_BRACKETS);
         consome(IDENTIFIER);
-        while(lookahead == COLON){
-                consome(COLON);
+        while(lookahead == COMMA){
+                consome(COMMA);
                 consome(IDENTIFIER);
         }
         consome(CLOSE_BRACKETS);

@@ -1,0 +1,12 @@
+
+program e1;
+(*  *)
+var 
+    a,b,c : integer;
+	d : char;
+begin
+	read(a,b);
+
+    c := (a>12d2)(and(b<550); (*erro parenteses*)
+	b := '3; 
+end.

@@ -1,0 +1,11 @@
+program e2;
+
+Var (*erro palavra reservada*)
+     a,b,c : integer;
+	d : char;
+begin
+	read(a,b);
+
+    c := (a>12d2)and(b<550);
+	b = '3; 
+end.

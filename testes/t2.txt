@@ -1,0 +1,18 @@
+
+program t2;
+var 
+    n_1, n_2, n_3:integer;
+
+begin
+    read(n_1); (**)
+    read(n_2);
+
+    if N_1 > N_2 then
+        n_3 := n_1
+    else
+        n_3 := n_2;
+
+    if( n_31 = N_3) then
+        write(n_3,n_3)
+    
+end.

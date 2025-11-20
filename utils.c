@@ -18,7 +18,7 @@ bool is_operator_or_delimiter(char symbol){
                 symbol == '(' || symbol == ')' ||
                 symbol == '<' || symbol == '>' || 
                 symbol == '+' || symbol == '-' ||
-                symbol == '*';
+                symbol == '*' || symbol == '=';
 }
 
 bool is_token_delimiter(){

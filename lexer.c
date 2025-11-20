@@ -25,7 +25,10 @@ TInfoAtomo obter_atomo(){
         else if(*buffer == '\'') recognizes_constchar(&infoAtomo);
         else if(*buffer == '\0') infoAtomo.atomo = EOS;
         // se há um erro léxico no primeiro caractere do buffer, então eu limpo o contéudo do lexema anterior para capturar o token errado no report
-        else lexema[0] = '\0'; 
+        else{
+                lexema[0] = '\0';
+                buffer++;
+        }
 
         return infoAtomo;
 }
@@ -171,7 +174,7 @@ void recognizes_operator_or_delimiter(TInfoAtomo *info){
         }else if(*buffer == '*'){
                 buffer++;
                 goto q5;
-        }else if(*buffer == '+' || *buffer == '-' || *buffer == ')' ||
+        }else if(*buffer == '+' || *buffer == '-' || *buffer == '=' || *buffer == ')' ||
                  *buffer == ';' || *buffer == ',' || *buffer == '.'){
                 buffer++;
                 goto q6;
@@ -193,7 +196,6 @@ q5:
         if(*buffer == ')') buffer++;
         goto q6;
 q6:
-
         strncpy(info->atributo.id, ini_lexema, buffer-ini_lexema);
         info->atributo.id[buffer-ini_lexema] = '\0';
 
@@ -205,9 +207,9 @@ q6:
                 return;
         }
 
-        const char* operator[] = {":=", "<>", "<", "<=", ">", ">=", "+", "-", "*"};
+        const char* operator[] = {":=", "<>", "<", "<=", ">", ">=", "+", "-", "*", "="};
         const TAtomo operators_atoms[] = {ASSIGNMENT, DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_THAN,
-                                          GREATER_OR_EQUAL_THAN, PLUS, MINUS, MULTIPLY};
+                                          GREATER_OR_EQUAL_THAN, PLUS, MINUS, MULTIPLY, EQUAL_TO};
 
         const int operator_length = sizeof(operator)/sizeof(operator[0]);
         bool is_operator = false;

@@ -1,0 +1,4 @@
+program t0;
+begin
+  write(a)
+end.
