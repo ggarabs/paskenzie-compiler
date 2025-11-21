@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "utils.h"
 #include "errors.h"
+#include "semantic-analyzer.h"
 
 void consome(TAtomo atomo){
        if(lookahead == OPEN_COMMENT) consome_comment();
@@ -67,9 +68,11 @@ void variable_declaration_part(){
 }
 
 void variable_declaration(){
+        aloca_variavel();
         consome(IDENTIFIER);
         while(lookahead == COMMA){
                 consome(COMMA);
+                aloca_variavel();
                 consome(IDENTIFIER);
         }
         consome(COLON);
@@ -113,6 +116,7 @@ void statement(){
 }
 
 void assignment_statement(){
+        if(busca_tabela_simbolos(infoAtomo.atributo.id) == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
         consome(IDENTIFIER);
         consome(ASSIGNMENT);
         expression();
@@ -121,9 +125,11 @@ void assignment_statement(){
 void read_statement(){
         consome(READ);
         consome(OPEN_BRACKETS);
+        if(busca_tabela_simbolos(infoAtomo.atributo.id) == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
         consome(IDENTIFIER);
         while(lookahead == COMMA){
                 consome(COMMA);
+                if(busca_tabela_simbolos(infoAtomo.atributo.id) == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
                 consome(IDENTIFIER);
         }
         consome(CLOSE_BRACKETS);
@@ -132,9 +138,11 @@ void read_statement(){
 void write_statement(){
         consome(WRITE);
         consome(OPEN_BRACKETS);
+        if(busca_tabela_simbolos(infoAtomo.atributo.id) == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
         consome(IDENTIFIER);
         while(lookahead == COMMA){
                 consome(COMMA);
+                if(busca_tabela_simbolos(infoAtomo.atributo.id) == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
                 consome(IDENTIFIER);
         }
         consome(CLOSE_BRACKETS);
@@ -232,6 +240,9 @@ void factor(){
                         }else if(factor_atoms[index] == NOT){
                                 consome(NOT);
                                 factor();
+                        }else if(factor_atoms[index] == IDENTIFIER){
+                                if(busca_tabela_simbolos(infoAtomo.atributo.id) == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
+                                consome(IDENTIFIER);
                         }else consome(factor_atoms[index]);
                         is_factor = true;
                         break;
