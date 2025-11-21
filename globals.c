@@ -20,4 +20,6 @@ TInfoAtomo infoAtomo;
 char *buffer;
 char lexema[100000];    // lexema definido com valor acima do id máximo para exibir tokens incorretos mesmo sem armazenar no id do átomo
 int nLinha = 1;
+int variable_counter;
+int labels_counter = 1;
 const int IDENTIFIER_MAX_LENGTH = 15;

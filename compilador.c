@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "globals.h"
 #include "utils.h"
+#include "semantic-analyzer.h"
 
 int main(int argc, char** argv){
         // obtenção do nome do código-fonte em paskenzie a partir dos argumentos fornecidos por linha de comando
@@ -44,7 +45,9 @@ int main(int argc, char** argv){
         program();
         consome(EOS);
 
-        printf("\n%d linha(s) analisada(s), programa sintaticamente correto\n", nLinha);
+        imprime_tabela_simbolos();
+
+//        printf("\n%d linha(s) analisada(s), programa sintaticamente correto\n", nLinha);
 
         fclose(file_pointer);
 

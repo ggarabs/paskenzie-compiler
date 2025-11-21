@@ -7,16 +7,22 @@
 #include "lexer.h"
 #include "utils.h"
 #include "errors.h"
+#include "semantic-analyzer.h"
+
+const int operator_atom[] = {DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_OR_EQUAL_THAN, 
+                                        GREATER_THAN, EQUAL_TO, OR, AND};
+
+const char* operator_instructions[] = {"\tCMDG", "\tCMME", "\tCMEG", "\tCMAG", "\tCMMA", "\tCMIG", "\tDISJ", "\tCONJ"};                                        
 
 void consome(TAtomo atomo){
        if(lookahead == OPEN_COMMENT) consome_comment();
        if(lookahead == EOS) return;
        if(lookahead == atomo){
-                printf("#  %d:%s", nLinha, atom_outputs[atomo]);
-                if(atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
-                else if(atomo == CONSTCHAR) printf(" : %c", infoAtomo.atributo.ch);
-                else if(atomo == CONSTINT) printf(" : %d", infoAtomo.atributo.numero);
-                printf("\n");
+                // printf("#  %d:%s", nLinha, atom_outputs[atomo]);
+                // if(atomo == IDENTIFIER) printf(" : %s", infoAtomo.atributo.id);
+                // else if(atomo == CONSTCHAR) printf(" : %c", infoAtomo.atributo.ch);
+                // else if(atomo == CONSTINT) printf(" : %d", infoAtomo.atributo.numero);
+                // printf("\n");
                 infoAtomo = obter_atomo();
                 lookahead = infoAtomo.atomo;
                 if(infoAtomo.atomo == ERROR) report_lexical_error();
@@ -28,7 +34,7 @@ void consome(TAtomo atomo){
 void consome_comment(){
         while(lookahead == OPEN_COMMENT){
                 if(lookahead == EOS) report_lexical_error();
-                printf("#  %d:%s\n", nLinha, atom_outputs[lookahead]);
+                // printf("#  %d:%s\n", nLinha, atom_outputs[lookahead]);
                 infoAtomo = obter_atomo();
                 lookahead = infoAtomo.atomo;
                 while(lookahead != CLOSE_COMMENT){
@@ -42,11 +48,14 @@ void consome_comment(){
 }
 
 void program(){
+        printf("\tINPP\n");
         consome(PROGRAM);
         consome(IDENTIFIER);
         consome(SEMICOLON);
         block();
         consome(DOT);
+        if(variable_counter > 0) printf("\tDMEM %d\n", variable_counter);
+        printf("\tPARA\n");
 }
 
 void block(){
@@ -64,12 +73,15 @@ void variable_declaration_part(){
                         consome(SEMICOLON);
                 }
         }
+        if(variable_counter > 0) printf("\tAMEM %d\n", variable_counter);
 }
 
 void variable_declaration(){
+        aloca_variavel();
         consome(IDENTIFIER);
         while(lookahead == COMMA){
                 consome(COMMA);
+                aloca_variavel();
                 consome(IDENTIFIER);
         }
         consome(COLON);
@@ -81,7 +93,7 @@ void type(){
                 case CHAR:
                         consome(CHAR);
                         break;
-                case  INTEGER:
+                case INTEGER:
                         consome(INTEGER);
                         break;
                 case BOOLEAN:
@@ -113,18 +125,29 @@ void statement(){
 }
 
 void assignment_statement(){
+        int endereco = busca_tabela_simbolos(infoAtomo.atributo.id);
+        if(endereco == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
         consome(IDENTIFIER);
         consome(ASSIGNMENT);
         expression();
+        printf("\tARMZ %d\n", endereco);
 }
 
 void read_statement(){
         consome(READ);
         consome(OPEN_BRACKETS);
+        int endereco = busca_tabela_simbolos(infoAtomo.atributo.id);
+        if(endereco == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
         consome(IDENTIFIER);
+        printf("\tLEIT\n");
+        printf("\tARMZ %d\n", endereco);
         while(lookahead == COMMA){
                 consome(COMMA);
+                endereco = busca_tabela_simbolos(infoAtomo.atributo.id);
+                if(endereco == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
                 consome(IDENTIFIER);
+                printf("\tLEIT\n");
+                printf("\tARMZ %d\n", endereco);
         }
         consome(CLOSE_BRACKETS);
 }
@@ -132,49 +155,71 @@ void read_statement(){
 void write_statement(){
         consome(WRITE);
         consome(OPEN_BRACKETS);
+        int endereco = busca_tabela_simbolos(infoAtomo.atributo.id);
+        if(endereco == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
         consome(IDENTIFIER);
+        printf("\tCRVL %d\n", endereco);
+        printf("\tIMPR\n");
         while(lookahead == COMMA){
                 consome(COMMA);
+                int endereco = busca_tabela_simbolos(infoAtomo.atributo.id);
+                if(endereco == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
                 consome(IDENTIFIER);
+                printf("\tCRVL %d\n", endereco);
+                printf("\tIMPR\n");
         }
         consome(CLOSE_BRACKETS);
 }
 
 void if_statement(){
+        int L1 = proximo_rotulo();
+        int L2 = proximo_rotulo();
         consome(IF);
         expression();
         consome(THEN);
+        printf("\tDSVF L%d\n", L1);
         statement();
+        printf("\tDSVS L%d\n", L2);
+        printf("L%d: NADA\n", L1);
         if(lookahead == ELSE){
                 consome(ELSE);
                 statement();
         }
+        printf("L%d: NADA\n", L2);
 }
 
 void while_statement(){
+        int L1 = proximo_rotulo();
+        int L2 = proximo_rotulo();
+        printf("L%d: NADA\n", L1);
         consome(WHILE);
         expression();
+        printf("\tDSVF L%d\n", L2);
         consome(DO);
         statement();
+        printf("\tDSVS L%d\n", L1);
+        printf("L%d: NADA\n", L2);
 }
 
 void expression(){
         simple_expression();
-        if(lookahead == DIFFERENT || lookahead == LESS_THAN || lookahead == LESS_OR_EQUAL_THAN || 
-              lookahead == GREATER_OR_EQUAL_THAN ||  lookahead == GREATER_THAN || 
-              lookahead == EQUAL_TO || lookahead == OR || lookahead == AND){
-                relational_operator();
-                simple_expression();
+
+        const int operator_atom_length = sizeof(operator_atom)/sizeof(int);
+
+        for(int index = 0; index < operator_atom_length; index++){
+                if(lookahead == operator_atom[index]){
+                        relational_operator();
+                        simple_expression();
+                        printf("%s\n", operator_instructions[index]);
+                        break;
+                }
         }
 }
 
 void relational_operator(){
-        const int operator_atom[] = {DIFFERENT, LESS_THAN, LESS_OR_EQUAL_THAN, GREATER_OR_EQUAL_THAN, 
-                                        GREATER_THAN, EQUAL_TO, OR, AND};
+        bool is_relational_operator = false;
 
         const int operator_atom_length = sizeof(operator_atom)/sizeof(int);
-
-        bool is_relational_operator = false;
 
         for(int index = 0; index < operator_atom_length; index++){
                 if(lookahead == operator_atom[index]){
@@ -191,8 +236,11 @@ void relational_operator(){
 void simple_expression(){
         term();
         while(lookahead == PLUS || lookahead == MINUS){
+                bool is_sum = lookahead == PLUS;
                 adding_operator();
                 term();
+                if(is_sum) printf("\tSOMA\n");
+                else printf("\tSUBT\n");
         }
 }
 
@@ -205,8 +253,11 @@ void adding_operator(){
 void term(){
         factor();
         while(lookahead == MULTIPLY || lookahead == DIV){
+                bool is_multiplication = lookahead == MULTIPLY;
                 multiplying_operator();
                 factor();
+                if(is_multiplication) printf("\tMULT\n");
+                else printf("\tDIVI\n");
         }
 }
 
@@ -232,6 +283,14 @@ void factor(){
                         }else if(factor_atoms[index] == NOT){
                                 consome(NOT);
                                 factor();
+                        }else if(factor_atoms[index] == CONSTINT){
+                                printf("\tCRCT %d\n", infoAtomo.atributo.numero);
+                                consome(CONSTINT);
+                        }else if(factor_atoms[index] == IDENTIFIER){
+                                int endereco = busca_tabela_simbolos(infoAtomo.atributo.id);
+                                if(endereco == -1) report_semantic_error(infoAtomo.atributo.id, NOT_DECLARED);
+                                printf("\tCRVL %d\n", endereco);
+                                consome(IDENTIFIER);
                         }else consome(factor_atoms[index]);
                         is_factor = true;
                         break;

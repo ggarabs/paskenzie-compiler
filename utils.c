@@ -30,3 +30,7 @@ bool is_token_delimiter(){
                *buffer == '=' || *buffer == ';' || 
                *buffer == ':' || *buffer == '(';
 }
+
+int proximo_rotulo(){
+        return labels_counter++;
+}

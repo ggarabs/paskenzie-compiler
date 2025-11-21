@@ -10,8 +10,6 @@
 void report_lexical_error(){
         bool is_buffer_changed = false;
 
-        printf("%s\n", lexema);
-
         // se o erro foi encontrado no meio de um token, esse trecho de código o recupera
         char *ini_lexema = buffer-strlen(lexema);
         while(*buffer != EOS && *buffer != '\n' && *buffer != ' ' && !is_token_delimiter()){
@@ -40,5 +38,12 @@ void report_syntax_error(TAtomo atomo, TInfoAtomo infoAtomo){
 
 void report_comment_error(char* incorrect_token){
         printf("#  %d:erro léxico, comentário mal formado.\n", nLinha);
+        exit(1);
+}
+
+void report_semantic_error(char* incorrect_token, TSemanticErrorType type){
+        if(type == NOT_UNIQUE) printf("#  %d:erro semântico, variável [%s] já alocada!\n", nLinha, incorrect_token);
+        else if(type == NOT_DECLARED) printf("#  %d:erro semântico, variável [%s] não declarada!\n", nLinha, incorrect_token);
+        else printf("#  %d:erro semântico!\n", nLinha);
         exit(1);
 }
