@@ -26,6 +26,7 @@ extern TAtomo lookahead;
 extern TInfoAtomo infoAtomo;
 extern int nLinha;
 extern int variable_counter;
+extern int labels_counter;
 extern const int IDENTIFIER_MAX_LENGTH;
 
 #endif

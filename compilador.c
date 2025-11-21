@@ -47,7 +47,7 @@ int main(int argc, char** argv){
 
         imprime_tabela_simbolos();
 
-        printf("\n%d linha(s) analisada(s), programa sintaticamente correto\n", nLinha);
+//        printf("\n%d linha(s) analisada(s), programa sintaticamente correto\n", nLinha);
 
         fclose(file_pointer);
 
